@@ -9,7 +9,7 @@ param.z=0.5*param.dz:param.dz:depth-0.5*param.dz; %cell interval
 
 
 time_duration=45000; %[hours] simulating now 5,13 years
-param.I0=350; %[W m^-2] 1 W m^-2 approx. 1 μmole. m2/s ≈ 0.21739130434 W/m2.
+param.I0=200; %[W m^-2] 1 W m^-2 approx. 1 μmole. m2/s ≈ 0.21739130434 W/m2.
 
 
 param.D=(5*(60*60))/10000; %diffusivity [m^2 h^-1] 
@@ -57,7 +57,7 @@ I=calclight(t(end),P(end,:),D(end,:),param);
 % Mini=min(I_min,N_min);
 % sigma=I_min.*N_min;
 sigma_N_end=(N(end,:)./(param.k_N+N(end,:)));
-sigma_L_end=(param.alpha.*I(end,:))./(sqrt(param.gmax^2+param.alpha^2.*I(end,:).^2));
+sigma_L_end=(param.alpha.*I)./(sqrt(param.gmax^2+param.alpha^2.*I.^2));
 sigma_end=(sigma_L_end.*sigma_N_end);
 sigma_min=min(sigma_L_end,sigma_N_end);
 
@@ -179,7 +179,7 @@ grid on; grid minor;
 
 
 
-%% ------------------------ Parameter sensitivity analysis
+% ------------------------ Parameter sensitivity analysis
 
 depth = 300; % Depth of water column [m]
 param.dz = 1; % Length or depth of each cell
