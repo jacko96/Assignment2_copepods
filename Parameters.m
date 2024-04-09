@@ -1,0 +1,16 @@
+% Define parameters
+param.D = 100; % depth
+param.u = 0.04; % plankton curren0t (gravitational flux) / sinking velocity (m/h)
+param.d = 3*10^(-4)/(1/(60*60)); % Diffusion constant (m2/h)
+param.Iin = 400*3600; % Light surface input (micromol photons/(m2 h))
+param.k = 0.01*6*10^(-10); % light absorbtion coefficient of plankton (m2/cell)
+param.Kbg = 0.045; % background turbidity (1/m)
+param.HI = 20*3600; % Half saturation constant of light limited growth (micromol photons/m2 h)
+param.HN = 0.015; % Half saturation constant of nutrient limited growth (mmol nutrient/m3)
+param.pmax = 0.04; % maximum growth rate (both plankton and nutrients) (1/h)
+param.y = 1*10^(-9); % Nutrient content of phytoplankton (mmol nutrient/cell)
+param.l = 0.01; % specific loss rate (plankton mortality) (1/h)
+param.ND = 5; % Nutrient conc. at bottom (mmol nutrient/m3)
+param.gamma = 0.5/24; % Grazing (m3 (mmol N)^(-1) 1/h)
+param.r = 0.15/24; % Detritus remineralization rate (1/h)
+param.w = 10/24; % detritus sinking velocity (1/h)
