@@ -2,11 +2,11 @@ clear all;clc;
 close all
 
 %System parameters
-depth=300; %depth of water column [m]
+depth=100; %depth of water column [m]
 param.dz=1; %length or depth of each cell
 param.n=depth/param.dz; %number of gridcells
-param.z=0.5*param.dz:param.dz:depth-0.5*param.dz; %cell interval
-time_duration=1000; %[hours] 
+param.z=0.5*param.dz:param.dz:depth-0.5*param.dz; %cell centers (FVM)
+time_duration=365*24*1; %[hours] 
 
 %Light parameters
 param.I0=200; %[W m^-2] 1 W m^-2 approx. 1 μmole. m2/s ≈ 0.21739130434 W/m2.
@@ -33,53 +33,37 @@ param.S=5; %Number of lifestages for Copepods
 param.CtoN=5.6;
 param.v=0.0052/24*param.CtoN*0.001; %passive clearance rate coefficient [L mg N^{-3/4} h^{-1}]
 param.q=-1/4; %passive clearance rate exponent (no exponent)
-param.h=0.4*param.CtoN/24*0.001; %maximum ingestion rate coefficent [mg N^{1/4} h^{-1}]
+param.h=0.4*param.CtoN/24*0.001; %0.4*param.CtoN/24*0.001 --> maximum ingestion rate coefficent [mg N^{1/4} h^{-1}]
 param.h_n=-1/4; %maximum ingestion rate exponent
 param.kappa=0.048/24*param.CtoN*0.001; % respiration rate coefficent [mg N^{1/4} h^{-1}]
 param.p=-1/4; %respiration rate exponent
-param.assi=0.67; %assimilation rate
-param.reproc=0.25; %reproduction efficiency rate
+param.assi=0.67; %0.67 -> assimilation rate
+param.reproc=((47+0.5)/2)/24; %0.25 -> reproduction efficiency rate
 param.mu_ht=0.003*param.CtoN*0.001; %Mortality by higher trophic levels [mg N^{1/4} mgN^{-2} L^{-2} h^{-1}]
 param.Cs=0.001; %Copepod speed velocity [m/h]
-param.b=0.37/24; %reproduction rate [h^{-1}]
-param.mu=0.01; %death or mortality rate of copepods [h^-1] --> based on averages found online
+param.b=((0.5+47)/2)*24/2; %0.37/24 -> reproduction rate [h^{-1}]
+param.mu=1/(((14+365)/2)*24); % -> death or mortality rate of copepods [h^-1] --> based on averages found online
 
 %Copepods grid space
 param.m0=0.01; % mgN pr individual
 param.ma=1; % mgN pr individual
-param.m_minus=exp(linspace(log(param.m0),log(param.ma),param.S+1)); % mgN pr individual
-param.m_plus=exp(((log(param.m_minus(2:param.S+1))+log(param.m_minus(1:param.S)))/2)); % mgN pr individual
-param.m_ratio=param.m_plus(2)./param.m_plus(1);
+param.m_bound=exp(linspace(log(param.m0),log(param.ma),param.S+1)); % mgN pr individual
+param.m_center=exp(((log(param.m_bound(2:param.S+1))+log(param.m_bound(1:param.S)))/2)); % mgN pr individual
+%param.m_ratio=param.m_center(1)./param.m_center(2);
+param.m_ratio=param.m_bound(1)./param.m_bound(2);
 
 
 %--------------------------------- Initialization
 
 
-%C1=0.0*param.z;
-C1=ones(1,param.n);
-%C2=0.0*param.z;
-%C2(1)=1;
-C2=ones(1,param.n);
-%C3=0.0*param.z;
-%C3(1)=1;
-C3=ones(1,param.n);
-%C4=0.0*param.z;
-%C4(1)=1;
-C4=ones(1,param.n);
-%C5=0.0*param.z;
-%C5(1)=1;
-C5=ones(1,param.n);
+C1=1e4.*ones(1,param.n);
+C2=1e4.*ones(1,param.n);
+C3=1e4.*ones(1,param.n);
+C4=1e4.*ones(1,param.n);
+C5=1e4.*ones(1,param.n);
 
-%C1=C1*0;
-%C2=C2*0;
-%C3=C3*0;
-%C4=C4*0;
-%C5=C5*0;
-
-%P = 1 * param.z; %
-P = 50*ones(1,param.n);
-%N = 1 * param.z; %
-N = 100*ones(1,param.n);
+P = 1e6*ones(1,param.n); %0.00002
+N = 0*ones(1,param.n);
 D = 0 * param.z; %
 
 N(1:end)=0+param.Nb/length(param.z)*param.z;
@@ -110,7 +94,7 @@ figure('Name', "NPZD Dynamics");
 
 % Subplot for Phytoplankton (P)
 subplot(3, 3, 1);
-surface(t, -param.z', P');
+surface(t/24/365, -param.z', P');
 shading interp;
 title('Phytoplankton');
 colorbar;
@@ -120,7 +104,7 @@ set(gca, 'XTick', []);
 
 % Subplot for Nutrients (N)
 subplot(3, 3, 2);
-surface(t, -param.z', N');
+surface(t/24/365, -param.z', N');
 shading interp;
 title('Nutrients');
 colorbar;
@@ -130,58 +114,63 @@ set(gca, 'XTick', []);
 
 % Subplot for Detritus (D)
 subplot(3, 3, 3);
-surface(t, -param.z', D');
+surface(t/24/365, -param.z', D');
 shading interp;
 title('Detritus');
 colorbar;
 grid on; grid minor;
 set(gca, 'XTickLabel', []);
 set(gca, 'XTick', []);
+%clim([0 100])
 
 % Subplot for C1
 subplot(3, 3, 4);
-surface(t, -param.z', C1');
+surface(t/24/365, -param.z', C1');
 shading interp;
 title('C1');
 colorbar;
 grid on; grid minor;
 ylabel('Depth [m]');
+%clim([1e-9 1e-4])
 
 % Subplot for C2
 subplot(3, 3, 5);
-surface(t, -param.z', C2');
+surface(t/24/365, -param.z', C2');
 shading interp;
 title('C2');
 colorbar;
 grid on; grid minor;
+%clim([1e-9 1e-4])
 
 % Subplot for C3
 subplot(3, 3, 6);
-surface(t, -param.z', C3');
+surface(t/24/365, -param.z', C3');
 shading interp;
 title('C3');
 colorbar;
 grid on; grid minor;
-xlabel('Hours');
+xlabel('Time [yr]');
+%clim([1e-9 1e-4])
 
 % Subplot for C4
 subplot(3, 3, 7);
-surface(t, -param.z', C4');
+surface(t/24/365, -param.z', C4');
 shading interp;
 title('C4');
 colorbar;
 grid on; grid minor;
-xlabel('Hours');
-ylabel('Depth [m]');
+xlabel('Time [yr]');
+%clim([1e-9 1e-4])
 
 % Subplot for C5
 subplot(3, 3, 8);
-surface(t, -param.z', C5');
+surface(t/24/365, -param.z', C5');
 shading interp;
 title('C5');
 colorbar;
 grid on; grid minor;
-xlabel('Hours');
+xlabel('Time [yr]');
+%clim([1e-9 1e-4])
 
 % Adjust the layout
 sgtitle('State Variables Dynamics [mgN]');
@@ -192,9 +181,90 @@ linkaxes(findall(gcf, 'type', 'axes'), 'x');
 figure()
 surface(t, -param.z', C1');
 shading interp;
-title('C2');
+title('C1');
 colorbar;
 grid on; grid minor;
+%clim([1e-9 1e-4])
+
+%%
+Set_depth = round(30); %Sets the depth at which you want to investigate somatic growth
+Cop_space = [C1(:,Set_depth) C2(:,Set_depth) C3(:,Set_depth) C4(:,Set_depth) C5(:,Set_depth)]; %bottom of water column
+figure()
+h = surface(t/24/365,param.m_center,Cop_space');
+set(gca, 'ZScale', 'log'); % Set z-axis to logarithmic scale
+shading interp
+colorbar
+title(['Somatic growth at ' num2str(Set_depth) 'm depth']);
+xlabel('Time [yr]')
+ylabel('Body mass [mgN/#]')
+
+% % Plot ylines and add red text "group x" beside each yline
+% yline(param.m_bound(1),'-k','LineWidth',1)
+% text(0.5, param.m_bound(1), 'Group 1', 'HorizontalAlignment', 'right', 'Color', 'r');
+% 
+% yline(param.m_bound(2),'-k','LineWidth',1)
+% text(0.5, param.m_bound(2), 'Group 2', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_bound(3),'-k','LineWidth',1)
+% text(0.5, param.m_bound(3), 'Group 3', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_bound(4),'-k','LineWidth',1)
+% text(0.5, param.m_bound(4), 'Group 4', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_bound(5),'-k','LineWidth',1)
+% text(0.5, param.m_bound(5), 'Group 5', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_bound(6),'-k','LineWidth',1)
+% text(0.5, param.m_bound(6), 'Group 5', 'HorizontalAlignment', 'left', 'Color', 'r');
+
+% Plot ylines and add red text "group x" beside each yline
+yline(param.m_center(1),'-.k','LineWidth',2)
+text(0.5, param.m_center(1), 'Group 1', 'HorizontalAlignment', 'right', 'Color', 'k');
+
+yline(param.m_center(2),'-.k','LineWidth',2)
+text(0.5, param.m_center(2), 'Group 2', 'HorizontalAlignment', 'left', 'Color', 'k');
+
+yline(param.m_center(3),'-.k','LineWidth',2)
+text(0.5, param.m_center(3), 'Group 3', 'HorizontalAlignment', 'left', 'Color', 'k');
+
+yline(param.m_center(4),'-.k','LineWidth',2)
+text(0.5, param.m_center(4), 'Group 4', 'HorizontalAlignment', 'left', 'Color', 'k');
+
+yline(param.m_center(5),'-.k','LineWidth',2)
+text(0.5, param.m_center(5), 'Group 5', 'HorizontalAlignment', 'left', 'Color', 'k');
+
+
+
+
+%%
+figure
+plot(C5(end,:),-param.z')
+% Set_time=round(t(end,end)); %Sets the depth at which you want to investigate somatic growth
+% Cop_time=[C1(Set_time,:); C2(Set_time,:); C3(Set_time,:); C4(Set_time,:); C5(Set_time,:)]; %bottom of water column
+% figure()
+% h = surface(-param.z,param.m_center,Cop_time);
+% %set(gca, 'ZScale', 'log'); % Set z-axis to logarithmic scale
+% shading interp
+% colorbar
+% title(['Somatic growth at ' num2str(Set_time) 'yr ']);
+% xlabel('Depth [m]')
+% ylabel('Body mass [mgN/#]')
+% 
+% % Plot ylines and add red text "group x" beside each yline
+% yline(param.m_center(1),'--r','LineWidth',2)
+% text(0.5, param.m_center(1), 'Group 1', 'HorizontalAlignment', 'right', 'Color', 'r');
+% 
+% yline(param.m_center(2),'--r','LineWidth',2)
+% text(0.5, param.m_center(2), 'Group 2', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_center(3),'--r','LineWidth',2)
+% text(0.5, param.m_center(3), 'Group 3', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_center(4),'--r','LineWidth',2)
+% text(0.5, param.m_center(4), 'Group 4', 'HorizontalAlignment', 'left', 'Color', 'r');
+% 
+% yline(param.m_center(5),'--r','LineWidth',2)
+% text(0.5, param.m_center(5), 'Group 5', 'HorizontalAlignment', 'left', 'Color', 'r');
 
 %% ----------------------------- Grid sensitivity analysis 
 % figure('Name',"Grid Sensitivity Analysis");
@@ -319,6 +389,9 @@ C3 = y(5*param.n+1:6*param.n);
 C4 = y(6*param.n+1:7*param.n);
 C5 = y(7*param.n+1:8*param.n);
 
+%-------------------- Setting negative values to zero
+P(P<0)=0; N(N<0)=0; D(D<0)=0; C1(C1<0)=0; C2(C2<0)=0; C3(C3<0)=0;
+C4(C4<0)=0; C5(C5<0)=0;
 
 % ---------------------------- Fluxes
 
@@ -338,7 +411,8 @@ JdD(ix)=-param.D*(D(ix)-D(ix-1))/param.dz;
 
 %Copepods
 JaC(ix)=0;
-JdC(ix)=-param.Cs*(P(ix)-P(ix-1))/param.dz; %the movement of copepods toward the phytoplankton
+JdC(ix)=param.Cs*(P(ix)-P(ix-1))/param.dz; % since we want it to go from lower concentrations to higher concentrations
+%the movement of copepods toward the phytoplankton
 
 % --------------------------------- Boundary conditions
 %Phytoplankton
@@ -376,8 +450,8 @@ I = calclight(t,P,D,param);
 
 sigma_N=(N./(param.k_N+N));
 sigma_L=(param.alpha.*I)./(sqrt(param.gmax^2+param.alpha^2.*I.^2));
-sigma=(sigma_L'.*sigma_N);
-%sigma_min=min(sigma_L',sigma_N);
+%sigma=(sigma_L'.*sigma_N);
+sigma=min(sigma_L',sigma_N);
 
 % ---------------------------- Advection-Diffusion
 gradientP=(-(JaP(2:param.n+1)+JdP(2:param.n+1)-JaP(1:param.n)-JdP(1:param.n))/param.dz)';
@@ -388,36 +462,34 @@ gradientC=(-(JaC(2:param.n+1)+JdC(2:param.n+1)-JaC(1:param.n)-JdC(1:param.n))/pa
 % ----------------------------- Copepods
 
 % Feeding level (0-1):
-%f=(param.v.*(param.m_plus.^param.q).*P)./(param.v.*(param.m_plus.^param.q).*P + param.h.*param.m_plus.^param.h_n);
-f = (param.v.*(param.m_plus.^param.q).*P/1000)./(param.v.*(param.m_plus.^param.q).*P/1000 + param.h.*param.m_plus.^param.h_n); % P/1000 fordi der er 1000 L på en m3.
+f = (param.v.*(param.m_center.^param.q).*P)./(param.v.*(param.m_center.^param.q).*P+param.h.*param.m_center.^param.h_n);
+%f =(param.v.*(param.m_center.^param.q).*P)./(param.v.*(param.m_center.^param.q).*P + param.h.*param.m_center.^param.h_n); % P/1000 fordi der er 1000 L på en m3.
 
-fc = param.kappa./(param.assi*param.h).*param.m_plus.^(param.p - param.h_n);
+fc = param.kappa./(param.assi*param.h).*param.m_center.^(param.p - param.h_n);
 % biomass accumulation/production rate:
-v = param.assi*param.h.*param.m_plus.^param.h_n.*(f - fc);
+v = param.assi*param.h.*param.m_center.^param.h_n.*(f - fc);
 g = max(0,v); % net energy gain
 mu_st = min(0,v); %mu constant?
 mu = mu_st + param.mu; % copepod mortality
-b = param.reproc*g(end,end); % copepod birth rate
+b = param.reproc.*g(:,end); % copepod birth rate
 gamma = (g - mu)./(1 - (param.m_ratio).^(1 - mu./g)); % Overgang fra lille til stor copepod
 gamma = max(zeros(size(gamma)),gamma); % hvis gamma bliver negativ
 
-dC1dt = b.*C5 + g(1)*C1 - gamma(1)*C1 - mu(1)*C1 + gradientC;
-dC2dt = gamma(1)*C1 + g(2)*C2 - gamma(2)*C2 - mu(2)*C2 + gradientC;
-dC3dt = gamma(2)*C2 + g(3)*C3 - gamma(3)*C3 - mu(3)*C3 + gradientC;
-dC4dt = gamma(3)*C3 + g(4)*C4 - gamma(4)*C4 - mu(4)*C4 + gradientC;
-dC5dt = gamma(4)*C4 - mu(5)*C5 + gradientC;
+dC1dt = b.*C5 + g(:,1).*C1 - gamma(:,1).*C1 - mu(:,1).*C1 + gradientC;
+dC2dt = gamma(:,1).*C1 + g(:,2).*C2 - gamma(:,2).*C2 - mu(:,2).*C2 + gradientC;
+dC3dt = gamma(:,2).*C2 + g(:,3).*C3 - gamma(:,3).*C3 - mu(:,3).*C3 + gradientC;
+dC4dt = gamma(:,3).*C3 + g(:,4).*C4 - gamma(:,4).*C4 - mu(:,4).*C4 + gradientC;
+dC5dt = gamma(:,4).*C4 - mu(:,5).*C5 + gradientC;
 
-%dC1dt=gradientC;
-%dC2dt=gradientC;
-%dC3dt=gradientC;
-%dC4dt=gradientC;
-%dC5dt=gradientC;
 
 % ----------------------------- NPD equations
-%dPdt = param.gmax .* sigma .* P - param.eps .* P - param.m .* (C1+C2+C3+C4+C5) + gradientP; %new equation utilizing equations from the paper
-dPdt = param.gmax .* sigma .* P - param.eps .* P - sum(param.v.*(param.m_plus.^param.q).*P/1000,2) + gradientP; % Har erstattet grazing rate med encounter rate fra ligning (1)
+Phytoplankton_loss=param.h.*param.m_center.^param.h_n.*(f);
+Phytoplankton_loss2=Phytoplankton_loss(:,1).*C1./param.m_center(1)+Phytoplankton_loss(:,2).*C2./param.m_center(2)+Phytoplankton_loss(:,3).*C3./param.m_center(3)+Phytoplankton_loss(:,4).*C4./param.m_center(4)+Phytoplankton_loss(:,5).*C5./param.m_center(5);
+
+dPdt = param.gmax .* sigma .* P - param.eps .* P -Phytoplankton_loss2+ gradientP; %new equation utilizing equations from the paper
+%dPdt = param.gmax .* sigma .* P - param.eps .* P - sum(param.v.*(param.m_center.^param.q).*P/1000,2) + gradientP; % Har erstattet grazing rate med encounter rate fra ligning (1)
 dNdt = -param.gmax .* sigma .* P + param.thao .* D + gradientN; %new equation utilizing equations from the paper
-dDdt = param.eps .* P + param.m .* (P .* P) - param.thao .* D +param.thao*(mu(1)*C1+mu(2)*C2+mu(3)*C3+mu(4)*C4+mu(5)*C5)+gradientD; %new equation utilizing equations from the paper
+dDdt = param.eps .* P + param.m .* (P .* P) - param.thao .* D +param.thao*Phytoplankton_loss2+gradientD; %new equation utilizing equations from the paper
 
 %adding the loss of copepods to detritus equation
 
